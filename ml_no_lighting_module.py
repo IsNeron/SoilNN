@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.modules.pooling import MaxPool2d, AvgPool2d, AvgPool3d, MaxPool3d
 from torch.utils.data import DataLoader
+from torchsummary import summary
 
 from scripts.prepare_data import prepare_permeability, generate_cfs_array_test, ExperimentalDataset
 from pathlib import Path
@@ -42,14 +43,21 @@ class CNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.layers_stack = nn.Sequential(
-        #   nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, padding=1),
-        #   nn.LeakyReLU(),
-        #   nn.MaxPool3d(3, stride=2),
-        #   nn.Conv2d(in_channels=3, out_channels=12, kernel_size=5, padding=2),
-        #   nn.LeakyReLU(),
-          #nn.MaxPool2d(3, stride=4),
-          #nn.Conv2d(in_channels=10, out_channels=10, kernel_size=3),
-          nn.AvgPool2d((3,3))
+            nn.Conv2d(in_channels=4, out_channels=8, kernel_size=7, padding=3),
+            nn.LeakyReLU(),
+            MaxPool2d((4,1), stride=(2,1)),
+            nn.Conv2d(in_channels=8, out_channels=12, kernel_size=5, padding=2),
+            nn.LeakyReLU(),
+            MaxPool2d((4,1), stride=(2,1)),
+            nn.Conv2d(in_channels=12, out_channels=6, kernel_size=3, padding=1),
+            nn.LeakyReLU(),
+            MaxPool2d((4,1), stride=(2,1)),
+            nn.Conv2d(in_channels=6, out_channels=3, kernel_size=3, padding=1),
+            nn.LeakyReLU(),
+            MaxPool2d((4,1), stride=(2,1)),
+            nn.Conv2d(in_channels=3, out_channels=1, kernel_size=3, padding=1),
+            nn.LeakyReLU(),
+            MaxPool2d((10,1), stride=(5,1))
           
       )
         self.nn_layers = nn.ModuleList()
@@ -66,7 +74,7 @@ def train_loop(
         dataloader, 
         model, 
         criterion, 
-        #optimizer, 
+        optimizer, 
         device
 ):
     num_batches = len(dataloader)
@@ -80,9 +88,9 @@ def train_loop(
         loss =  criterion(pred, labels.to(device))
 
         # Optimization
-        #optimizer.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
-        #optimizer.step()
+        optimizer.step()
 
         # End of your code
 
@@ -102,7 +110,7 @@ def train_loop(
 
 
 criterion = torch.nn.CrossEntropyLoss()
-#optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 num_epochs = 10
 
@@ -111,7 +119,7 @@ for i in range(num_epochs):
       train_loader,
       model,
       criterion,
-      #optimizer,
+      optimizer,
       device
   )
   print(train_loss)
@@ -120,3 +128,5 @@ for i in range(num_epochs):
 # accuracy = validate(model, test_loader, device)
 
 # print(f"Accuracy on TEST {accuracy:.2f}")
+
+# print(summary(model, (4,350,3)))
